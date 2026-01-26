@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Registro de Compras - William Cartones</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+<style>
+  * { box-sizing: border-box; }
+  
+  body { 
+      background: linear-gradient(135deg, #0b021a 0%, #121212 100%); 
+      color: #f0f0f0; 
+      font-family: 'Nunito', Arial, sans-serif; 
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+  }
+
+  .content-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+  }
+
+  header { 
+      display: flex; 
+      justify-content: space-between;
+      align-items: center; 
+      gap: 20px; 
+      margin-bottom: 30px; 
+      border-bottom: 1px solid #333;
+      padding-bottom: 20px;
+  }
+  
+  h1, h2 { 
+      margin: 0; 
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+
+  h2 {
+      margin-top: 40px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-size: 1.8em;
+  }
+
+  .button-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+  }
+  
+  button.volver-btn, button.borrar-btn, button.gestion-btn, button.copiar-btn {
+      border: none; 
+      color: white; 
+      font-weight: bold;
+      padding: 10px 20px; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-size: 1em;
+      font-family: 'Nunito', Arial, sans-serif;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  button.volver-btn, button.gestion-btn { background-color: #37474F; }
+  button.volver-btn:hover, button.gestion-btn:hover { 
+      background-color: #546E7A;
+      transform: translateY(-2px);
+  }
+  
+  button.copiar-btn { background: linear-gradient(45deg, #4CAF50, #8BC34A); }
+  button.copiar-btn:hover { 
+      background: linear-gradient(45deg, #8BC34A, #689F38);
+      transform: translateY(-2px);
+  }
+
+  button.borrar-btn { background-color: #e53935; }
+  button.borrar-btn:hover { background-color: #c62828; }
+  
+  .resumen { 
+      text-align: center; 
+      margin-bottom: 40px; 
+      font-size: 1.1em;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px 25px;
+  }
+  .resumen b { color: #fdd835; }
+  .resumen b.apartado-count { color: #2196f3; }
+
+  table { 
+      width: 100%; 
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-bottom: 40px; 
+      background: #1e1e1e;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #333;
+  }
+  
+  #tablaApartados { border: 1px solid #2196f3; }
+  #tablaApartados caption { background: #1A237E; }
+
+  caption { 
+      font-weight: 700; 
+      font-size: 1.3em; 
+      padding: 15px; 
+      background: #2a2a2a;
+      color: #f0f0f0;
+      text-align: left;
+  }
+  
+  th, td { 
+      border-bottom: 1px solid #333; 
+      padding: 12px 15px; 
+      text-align: left; 
+      color: #ccc;
+  }
+  th { background: #252525; color: #fff; }
+
+  .referencia-duplicada { color: #ff6b6b; font-weight: 700; }
+  .carton-pendiente { color: #fdd835; font-weight: 700; margin-left: 8px; }
+
+  #gestionPanel { 
+      display: none; 
+      background: #1e1e1e; 
+      padding: 20px; 
+      border-radius: 12px; 
+      max-height: 500px; 
+      overflow-y: auto; 
+      margin-bottom: 30px; 
+      border: 1px solid #333;
+  }
+  
+  .edit-btn { background: #2196f3; color: white; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; margin-right: 4px; }
+  .delete-btn { background: #e53935; color: white; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // NUEVA CONFIGURACIÓN DE FIREBASE
+  const firebaseConfig = {
+    apiKey: "AIzaSyB5xALU6YUQh8L9xXzCOqvjQIetErPVuEk",
+    authDomain: "williamcartonesdomingo.firebaseapp.com",
+    projectId: "williamcartonesdomingo",
+    storageBucket: "williamcartonesdomingo.firebasestorage.app",
+    messagingSenderId: "1049456250221",
+    appId: "1:1049456250221:web:5b8767ee38219c0aad5e64",
+    measurementId: "G-EFF881R8L0"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  function esReferenciaNumerica(referencia) {
+      if (!referencia) return false;
+      return /^\d+$/.test(referencia.trim());
+  }
+
+  async function cargarRegistros() {
+    const registros = {};
+    let totalMonto = 0;
+    const referencias = new Map();
+    let totalPendientes = 0; 
+    let totalApartados = 0;
+
+    const snapshotCartones = await db.collection('registrosCartones').get();
+    snapshotCartones.forEach(doc => { registros[doc.id] = doc.data().nombre; });
+
+    const cartonesOrdenados = Object.keys(registros).map(Number).sort((a,b) => a-b);
+    const tbodyCartones = document.querySelector('#tablaCartones tbody');
+    tbodyCartones.innerHTML = '';
+    for (const c of cartonesOrdenados) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${c}</td><td>${registros[c]}</td>`;
+      tbodyCartones.appendChild(tr);
+    }
+
+    const snapshotPagos = await db.collection('registrosPagos').orderBy('timestamp', 'desc').get();
+    const tbodyPagos = document.querySelector('#tablaPagos tbody');
+    const tbodyApartados = document.querySelector('#tablaApartados tbody');
+    
+    tbodyPagos.innerHTML = '';
+    tbodyApartados.innerHTML = '';
+
+    snapshotPagos.forEach(doc => {
+      const data = doc.data();
+      const refEsNumerica = esReferenciaNumerica(data.referencia);
+      
+      if (!refEsNumerica) totalApartados++;
+
+      totalMonto += parseFloat(data.monto);
+      const referenciaDuplicada = referencias.has(data.referencia);
+      referencias.set(data.referencia, true);
+      
+      const cartonesStr = (data.cartones && data.cartones.length > 0) ? data.cartones.join(", ") : "";
+      const numPendientes = data.pendientes || 0;
+      totalPendientes += numPendientes; 
+      const pendienteStr = (numPendientes > 0) ? `<span class="carton-pendiente">(+${numPendientes} pnd)</span>` : "";
+      let celdaCartones = (cartonesStr + pendienteStr).trim() || "-";
+
+      const tr = document.createElement('tr');
+      const botonesBase = `
+        <button class='edit-btn' onclick='editarPago("${doc.id}", ${JSON.stringify(data.cartones || [])}, ${numPendientes})'>Editar</button>
+        <button class='delete-btn' onclick='eliminarPago("${doc.id}", ${JSON.stringify(data.cartones || [])})'>Eliminar</button>
+      `;
+
+      if (refEsNumerica) {
+          tr.innerHTML = `
+            <td>${data.monto}</td>
+            <td class="${referenciaDuplicada ? 'referencia-duplicada' : ''}">${data.referencia}</td>
+            <td>${data.nombre || "-"}</td>
+            <td>${celdaCartones}</td>
+            <td>${botonesBase}</td>
+          `;
+          tbodyPagos.appendChild(tr);
+      } else {
+          tr.innerHTML = `
+            <td>${data.monto}</td>
+            <td class="${referenciaDuplicada ? 'referencia-duplicada' : ''}">${data.referencia}</td>
+            <td>${data.nombre || "-"}</td>
+            <td>${celdaCartones}</td>
+            <td>
+              <button class='edit-btn' onclick='editarApartadoReferencia("${doc.id}", "${data.referencia}")'>Ref</button>
+              ${botonesBase}
+            </td>
+          `;
+          tbodyApartados.appendChild(tr);
+      }
+    });
+
+    // ACTUALIZADO PARA 530 CARTONES
+    document.getElementById('resumen').innerHTML = `
+      <span>Vendidos: <b>${cartonesOrdenados.length}</b></span>
+      <span>Faltantes: <b>${530 - cartonesOrdenados.length}</b></span>
+      ${totalPendientes > 0 ? `<span>Pendientes: <b>${totalPendientes}</b></span>` : ''}
+      ${totalApartados > 0 ? `<span>Apartados: <b class="apartado-count">${totalApartados}</b></span>` : ''}
+      <span>Monto total: <b>${totalMonto} Bs</b></span>
+    `;
+
+    if (document.getElementById('gestionPanel').style.display === 'block') {
+      cargarGestionPanel(registros, cartonesOrdenados);
+    }
+  }
+
+  async function editarApartadoReferencia(pagoId, referenciaActual) {
+      const nuevaReferencia = prompt(`Editar la referencia para el apartado "${referenciaActual}":`, referenciaActual);
+      if (nuevaReferencia && nuevaReferencia.trim()) {
+          try {
+              await db.collection('registrosPagos').doc(pagoId).update({ referencia: nuevaReferencia.trim() });
+              cargarRegistros();
+          } catch (error) { console.error(error); }
+      }
+  }
+
+  function toggleGestion() {
+    const panel = document.getElementById('gestionPanel');
+    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    if (panel.style.display === 'block') cargarRegistros();
+  }
+
+  function cargarGestionPanel(registros, cartonesOrdenados) {
+    const tbodyGestion = document.querySelector('#gestionTabla tbody');
+    tbodyGestion.innerHTML = '';
+    cartonesOrdenados.forEach(c => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${c}</td><td>${registros[c]}</td><td>
+        <button class='edit-btn' onclick='editarNombre(${c})'>Editar</button>
+        <button class='delete-btn' onclick='eliminarCarton(${c})'>Eliminar</button>
+      </td>`;
+      tbodyGestion.appendChild(tr);
+    });
+  }
+
+  function editarNombre(carton) {
+    const nuevoNombre = prompt("Editar nombre para cartón " + carton + ":");
+    if (nuevoNombre && nuevoNombre.trim()) {
+      db.collection('registrosCartones').doc(carton.toString()).update({ nombre: nuevoNombre.trim() }).then(() => cargarRegistros());
+    }
+  }
+
+  function eliminarCarton(carton) {
+    if (confirm("¿Eliminar cartón " + carton + "?")) {
+      db.collection('registrosCartones').doc(carton.toString()).delete().then(() => cargarRegistros());
+    }
+  }
+
+  async function editarPago(pagoId, cartonesActuales, pendientesActuales) {
+    const pagoDoc = await db.collection('registrosPagos').doc(pagoId).get();
+    const data = pagoDoc.data();
+
+    const nuevoTexto = prompt("Edita los cartones (separados por coma):", cartonesActuales.join(", "));
+    if (nuevoTexto === null) return; 
+
+    const nuevoPendienteTexto = prompt("Cantidad de pendientes:", pendientesActuales);
+    if (nuevoPendienteTexto === null) return; 
+
+    // ACTUALIZADO PARA 530
+    const nuevosCartones = nuevoTexto.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 530);
+    const nuevosPendientes = parseInt(nuevoPendienteTexto) || 0;
+
+    const snapshot = await db.collection('registrosCartones').get();
+    const vendidos = new Set();
+    snapshot.forEach(doc => vendidos.add(parseInt(doc.id)));
+
+    for (let n of nuevosCartones) {
+      if (vendidos.has(n) && !cartonesActuales.includes(n)) {
+        alert(`El cartón ${n} ya está vendido.`);
+        return;
+      }
+    }
+
+    const batch = db.batch();
+    cartonesActuales.forEach(n => { if (!nuevosCartones.includes(n)) batch.delete(db.collection('registrosCartones').doc(n.toString())); });
+    nuevosCartones.forEach(n => { if (!cartonesActuales.includes(n)) batch.set(db.collection('registrosCartones').doc(n.toString()), { nombre: data.nombre }); });
+    batch.update(db.collection('registrosPagos').doc(pagoId), { cartones: nuevosCartones, pendientes: nuevosPendientes });
+
+    await batch.commit();
+    cargarRegistros();
+  }
+
+  async function eliminarPago(pagoId, cartones) {
+    if (!confirm("¿Deseas eliminar este pago y liberar los cartones?")) return;
+    try {
+      const batch = db.batch();
+      cartones.forEach(n => { batch.delete(db.collection('registrosCartones').doc(n.toString())); });
+      batch.delete(db.collection('registrosPagos').doc(pagoId));
+      await batch.commit();
+      cargarRegistros();
+    } catch (error) { console.error(error); }
+  }
+
+  async function borrarRegistros() {
+    if (!confirm("¿Borrar todos los registros definitivamente?")) return;
+    try {
+      const batch = db.batch();
+      const cartonesSnapshot = await db.collection('registrosCartones').get();
+      cartonesSnapshot.forEach(doc => batch.delete(doc.ref));
+      const pagosSnapshot = await db.collection('registrosPagos').get();
+      pagosSnapshot.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      cargarRegistros();
+    } catch (error) { console.error(error); }
+  }
+
+  function copiarTablasAlPortapapeles() {
+    function tablaAtexto(tabla) {
+      let texto = '';
+      const tbody = tabla.querySelector('tbody');
+      if (tbody) {
+        const bodyFilas = tbody.querySelectorAll('tr');
+        bodyFilas.forEach(fila => {
+          const celdas = fila.querySelectorAll('td');
+          const filaTexto = Array.from(celdas)
+            .filter((c, idx) => idx < celdas.length - 1)
+            .map(c => c.textContent.trim())
+            .join('\t');
+          if (filaTexto) texto += filaTexto + '\n';
+        });
+      }
+      return texto;
+    }
+    const textoCartones = tablaAtexto(document.getElementById('tablaCartones'));
+    navigator.clipboard.writeText(`== CARTONES VENDIDOS ==\n${textoCartones}`).then(() => alert('¡Tablas copiadas!'));
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    cargarRegistros();
+    document.getElementById('btnBorrar').addEventListener('click', borrarRegistros);
+    document.getElementById('btnGestion').addEventListener('click', toggleGestion);
+    document.getElementById('btnCopiar').addEventListener('click', copiarTablasAlPortapapeles);
+  });
+</script>
+</head>
+<body>
+<div class="content-wrapper">
+    <header>
+      <h1>Registro de Cartones (530)</h1>
+      <button class="volver-btn" onclick="window.location.href='index.html'">Volver</button>
+    </header>
+
+    <div class="button-bar">
+      <button id="btnGestion" class="gestion-btn">Gestionar Cartones</button>
+      <button id="btnCopiar" class="copiar-btn">Copiar Reporte</button>
+      <button id="btnBorrar" class="borrar-btn">Limpiar Base de Datos</button>
+    </div>
+
+    <div class="resumen" id="resumen"></div>
+
+    <table id="tablaCartones">
+      <caption>Cartón - Nombre</caption>
+      <thead><tr><th>Cartón</th><th>Nombre</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Apartados y Pagos Pendientes</h2>
+    <table id="tablaApartados">
+      <thead><tr><th>Monto (BS)</th><th>Referencia</th><th>Nombre</th><th>Números</th><th>Acciones</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Registro de Pagos Confirmados</h2>
+    <table id="tablaPagos">
+      <thead><tr><th>Monto (BS)</th><th>Referencia</th><th>Nombre</th><th>Números</th><th>Acciones</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <div id="gestionPanel">
+      <h2>Gestión de Cartones Vendidos</h2>
+      <table id="gestionTabla">
+        <thead><tr><th>Cartón</th><th>Nombre</th><th>Acciones</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+</div> 
+</body>
+</html>
