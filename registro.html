@@ -154,7 +154,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-  // NUEVA CONFIGURACIÓN DE FIREBASE
+  // CONFIGURACIÓN DE PRECIO (Puedes cambiar 350 por el valor real de cada cartón)
+  const PRECIO_POR_CARTON = 350;
+
   const firebaseConfig = {
     apiKey: "AIzaSyB5xALU6YUQh8L9xXzCOqvjQIetErPVuEk",
     authDomain: "williamcartonesdomingo.firebaseapp.com",
@@ -244,7 +246,6 @@
       }
     });
 
-    // ACTUALIZADO PARA 630 CARTONES
     document.getElementById('resumen').innerHTML = `
       <span>Vendidos: <b>${cartonesOrdenados.length}</b></span>
       <span>Faltantes: <b>${630 - cartonesOrdenados.length}</b></span>
@@ -256,6 +257,60 @@
     if (document.getElementById('gestionPanel').style.display === 'block') {
       cargarGestionPanel(registros, cartonesOrdenados);
     }
+  }
+
+  async function editarPago(pagoId, cartonesActuales, pendientesActuales) {
+    const pagoDoc = await db.collection('registrosPagos').doc(pagoId).get();
+    const data = pagoDoc.data();
+
+    const nuevoTexto = prompt("Edita los cartones (separados por coma):", cartonesActuales.join(", "));
+    if (nuevoTexto === null) return; 
+
+    const nuevoPendienteTexto = prompt("Cantidad de pendientes:", pendientesActuales);
+    if (nuevoPendienteTexto === null) return; 
+
+    const nuevosCartones = nuevoTexto.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 630);
+    const nuevosPendientes = parseInt(nuevoPendienteTexto) || 0;
+
+    // VALIDACIÓN: Verificar si los cartones nuevos ya están en uso por otro jugador
+    const snapshot = await db.collection('registrosCartones').get();
+    const vendidos = new Set();
+    snapshot.forEach(doc => vendidos.add(parseInt(doc.id)));
+
+    for (let n of nuevosCartones) {
+      if (vendidos.has(n) && !cartonesActuales.includes(n)) {
+        alert(`El cartón ${n} ya está vendido a otra persona.`);
+        return;
+      }
+    }
+
+    // LÓGICA DE RECALCULO DE MONTO AUTOMÁTICO
+    const nuevoMonto = (nuevosCartones.length + nuevosPendientes) * PRECIO_POR_CARTON;
+
+    const batch = db.batch();
+    
+    // 1. Quitar los cartones viejos que ya no están en la lista
+    cartonesActuales.forEach(n => { 
+        if (!nuevosCartones.includes(n)) {
+            batch.delete(db.collection('registrosCartones').doc(n.toString())); 
+        }
+    });
+    
+    // 2. Agregar los cartones nuevos a la lista de jugadores con el nombre del dueño
+    nuevosCartones.forEach(n => { 
+        batch.set(db.collection('registrosCartones').doc(n.toString()), { nombre: data.nombre }); 
+    });
+
+    // 3. Actualizar el pago con los nuevos cartones, pendientes y el MONTO RECALCULADO
+    batch.update(db.collection('registrosPagos').doc(pagoId), { 
+        cartones: nuevosCartones, 
+        pendientes: nuevosPendientes,
+        monto: nuevoMonto.toString()
+    });
+
+    await batch.commit();
+    alert(`Registro actualizado. Nuevo monto: ${nuevoMonto} Bs`);
+    cargarRegistros();
   }
 
   async function editarApartadoReferencia(pagoId, referenciaActual) {
@@ -298,40 +353,6 @@
     if (confirm("¿Eliminar cartón " + carton + "?")) {
       db.collection('registrosCartones').doc(carton.toString()).delete().then(() => cargarRegistros());
     }
-  }
-
-  async function editarPago(pagoId, cartonesActuales, pendientesActuales) {
-    const pagoDoc = await db.collection('registrosPagos').doc(pagoId).get();
-    const data = pagoDoc.data();
-
-    const nuevoTexto = prompt("Edita los cartones (separados por coma):", cartonesActuales.join(", "));
-    if (nuevoTexto === null) return; 
-
-    const nuevoPendienteTexto = prompt("Cantidad de pendientes:", pendientesActuales);
-    if (nuevoPendienteTexto === null) return; 
-
-    // ACTUALIZADO PARA 630
-    const nuevosCartones = nuevoTexto.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 630);
-    const nuevosPendientes = parseInt(nuevoPendienteTexto) || 0;
-
-    const snapshot = await db.collection('registrosCartones').get();
-    const vendidos = new Set();
-    snapshot.forEach(doc => vendidos.add(parseInt(doc.id)));
-
-    for (let n of nuevosCartones) {
-      if (vendidos.has(n) && !cartonesActuales.includes(n)) {
-        alert(`El cartón ${n} ya está vendido.`);
-        return;
-      }
-    }
-
-    const batch = db.batch();
-    cartonesActuales.forEach(n => { if (!nuevosCartones.includes(n)) batch.delete(db.collection('registrosCartones').doc(n.toString())); });
-    nuevosCartones.forEach(n => { if (!cartonesActuales.includes(n)) batch.set(db.collection('registrosCartones').doc(n.toString()), { nombre: data.nombre }); });
-    batch.update(db.collection('registrosPagos').doc(pagoId), { cartones: nuevosCartones, pendientes: nuevosPendientes });
-
-    await batch.commit();
-    cargarRegistros();
   }
 
   async function eliminarPago(pagoId, cartones) {
@@ -402,12 +423,6 @@
 
     <div class="resumen" id="resumen"></div>
 
-    <table id="tablaCartones">
-      <caption>Cartón - Nombre</caption>
-      <thead><tr><th>Cartón</th><th>Nombre</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
     <h2>Apartados y Pagos Pendientes</h2>
     <table id="tablaApartados">
       <thead><tr><th>Monto (BS)</th><th>Referencia</th><th>Nombre</th><th>Números</th><th>Acciones</th></tr></thead>
@@ -420,6 +435,13 @@
       <tbody></tbody>
     </table>
 
+    <h2>Lista de Jugadores</h2>
+    <table id="tablaCartones">
+      <caption>Cartón - Nombre</caption>
+      <thead><tr><th>Cartón</th><th>Nombre</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
     <div id="gestionPanel">
       <h2>Gestión de Cartones Vendidos</h2>
       <table id="gestionTabla">
@@ -429,5 +451,4 @@
     </div>
 </div> 
 </body>
-
 </html>
