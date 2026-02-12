@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bingo Mágico - Venta de Cartones</title>
+  <title>Bingo Mágico - DOMINGO</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,76 +11,26 @@
 
   <style>
     * { box-sizing: border-box; }
-    
     body {
       background: linear-gradient(135deg, #0b021a 0%, #121212 100%);
       color: #f0f0f0; font-family: 'Nunito', sans-serif;
       margin: 0; padding: 20px; min-height: 100vh;
     }
-
-    /* --- Encabezado --- */
-    .header { 
-      display: flex; flex-direction: column; align-items: center; 
-      position: relative; gap: 10px; margin-bottom: 30px; 
-    }
-    .logo-mago { font-size: 50px; margin-bottom: 5px; } 
+    .header { display: flex; flex-direction: column; align-items: center; position: relative; gap: 10px; margin-bottom: 30px; }
+    .logo-mago { font-size: 50px; } 
     h1 { color: #ffffff; text-shadow: 0 0 15px rgba(255,255,255,0.4); font-size: 2.2em; margin: 0; }
-
-    .registro-nav-btn {
-      background-color: #37474F; color: #fdd835; border: 1px solid #fdd835;
-      padding: 8px 16px; border-radius: 8px; font-weight: 900; cursor: pointer;
-      transition: 0.3s;
-    }
-    .registro-nav-btn:hover { background-color: #fdd835; color: #000; }
-
-    /* --- Formulario --- */
-    form { 
-      max-width: 600px; margin: 0 auto 30px auto; 
-      background: rgba(255,255,255,0.05); padding: 25px; 
-      border-radius: 20px; border: 1px solid #333; 
-    }
-    label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: #fdd835; font-size: 1.1em; }
-    input { 
-      width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #444; 
-      background: #1e1e1e; color: #fff; font-weight: 900; font-size: 1.2em;
-    }
+    .registro-nav-btn { background-color: #37474F; color: #fdd835; border: 1px solid #fdd835; padding: 8px 16px; border-radius: 8px; font-weight: 900; cursor: pointer; }
+    form { max-width: 600px; margin: 0 auto 30px auto; background: rgba(255,255,255,0.05); padding: 25px; border-radius: 20px; border: 1px solid #333; }
+    label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: #fdd835; }
+    input { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #444; background: #1e1e1e; color: #fff; font-weight: 900; font-size: 1.2em; }
     input#monto { background-color: #000; color: #fdd835; text-align: center; font-size: 1.8em; border-color: #fdd835; }
-
-    button[type="submit"] {
-      margin-top: 25px; width: 100%; padding: 18px; 
-      background: linear-gradient(45deg, #fdd835, #fbc02d);
-      border: none; border-radius: 10px; color: #000; font-weight: 900; 
-      font-size: 1.4em; cursor: pointer; transition: 0.3s;
-    }
-
-    #copyImageBtn {
-        max-width: 600px; display: block; margin: 15px auto;
-        background-color: #00c853; color: white; border: none;
-        padding: 15px; border-radius: 10px; cursor: pointer; 
-        font-weight: 900; font-size: 1.1em; width: 100%;
-    }
-
-    /* --- Tabla de 20 Columnas --- */
+    button[type="submit"] { margin-top: 25px; width: 100%; padding: 18px; background: linear-gradient(45deg, #fdd835, #fbc02d); border: none; border-radius: 10px; font-weight: 900; font-size: 1.4em; cursor: pointer; }
+    #copyImageBtn { max-width: 600px; display: block; margin: 15px auto; background: linear-gradient(45deg, #00c853, #64dd17); color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: 900; width: 100%; box-shadow: 0 4px 15px rgba(0,200,83,0.3); }
     .tabla-scroll { width: 100%; overflow-x: auto; margin-top: 30px; padding-bottom: 15px; }
-    #panel-cartones {
-      display: grid; grid-template-columns: repeat(20, 1fr); 
-      gap: 8px; background-color: #ffffff; padding: 20px; border-radius: 15px;
-      min-width: 1400px; margin: 0 auto;
-    }
-
-    .carton-btn {
-      aspect-ratio: 1/1; background: #fff; border: 2px solid #ddd;
-      color: #000; font-weight: 900; font-size: 1.8em; 
-      cursor: pointer; border-radius: 8px; transition: 0.2s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .carton-btn.selected { background-color: #fdd835; border-color: #000; transform: scale(1.1); z-index: 5; }
-    .carton-btn.vendido { opacity: 0.05; pointer-events: none; }
-
-    @media (min-width: 600px) {
-      .header { flex-direction: row; justify-content: center; }
-      .registro-nav-btn { position: absolute; right: 0; }
-    }
+    #panel-cartones { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; background-color: #ffffff; padding: 10px; border-radius: 10px; min-width: 1400px; margin: 0 auto; }
+    .carton-btn { aspect-ratio: 1/1; background: #fff; border: 1px solid #eee; color: #000; font-weight: 900; font-size: 2.2em; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+    .carton-btn.selected { background-color: #fdd835; border-color: #000; transform: scale(1.1); z-index: 5; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+    .carton-btn.vendido { opacity: 0.03; pointer-events: none; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -104,7 +54,7 @@
 
 <div class="header">
   <div class="logo-mago">🧙‍♂️</div> 
-  <h1>✨ ¡¡¡BINGO MÁGICO DOMINGO!!!! (630)</h1>
+  <h1>✨ ¡¡¡BINGO MAGIC DOMINGO!!! (630)</h1>
   <button class="registro-nav-btn" onclick="window.location.href='registro.html'">Ver Registros</button>
 </div>
 
@@ -112,8 +62,8 @@
   <label>Nombre del Jugador:</label>
   <input type="text" id="nombre" required placeholder="Nombre del cliente" />
 
-  <label>Cartones (Toca abajo o pega lista):</label>
-  <input type="text" id="cartonesSeleccionados" placeholder="Solo números disponibles del 1 al 530" />
+  <label>Cartones (Escribe 22-23, 22/23, 22 23 o pega lista):</label>
+  <input type="text" id="cartonesSeleccionados" placeholder="Cualquier separador funciona" autocomplete="off" />
 
   <label>Cartones Pendientes:</label>
   <input type="number" id="pendientes" value="0" min="0" />
@@ -127,7 +77,7 @@
   <button type="submit" id="comprarBtn">REGISTRAR COMPRA</button>
 </form>
 
-<button id="copyImageBtn">📸 COPIAR TABLA PARA WHATSAPP</button>
+<button id="copyImageBtn">📸 COPIAR TABLA + TEXTO PARA WHATSAPP</button>
 
 <div class="tabla-scroll">
   <div id="panel-cartones"></div>
@@ -145,17 +95,22 @@
   let vendidos = new Set();
 
   async function cargarVendidos() {
-    try {
-      const snap = await db.collection('registrosCartones').get();
-      snap.forEach(doc => {
-        const n = parseInt(doc.id);
-        vendidos.add(n);
-        const btn = document.querySelector(`[data-numero="${n}"]`);
-        if (btn) btn.classList.add('vendido');
-      });
-    } catch (e) { console.error(e); }
+    db.collection('registrosCartones').onSnapshot(snap => {
+      vendidos.clear();
+      snap.forEach(doc => vendidos.add(parseInt(doc.id)));
+      actualizarVisualTablero();
+    });
   }
 
+  function actualizarVisualTablero() {
+    document.querySelectorAll('.carton-btn').forEach(btn => {
+      const n = parseInt(btn.dataset.numero);
+      btn.classList.toggle('vendido', vendidos.has(n));
+      btn.classList.toggle('selected', seleccionados.has(n));
+    });
+  }
+
+  // Generar Tablero
   for (let i = 1; i <= TOTAL_CARTONES; i++) {
     const btn = document.createElement('button');
     btn.className = 'carton-btn';
@@ -163,57 +118,48 @@
     btn.dataset.numero = i;
     btn.onclick = () => {
       if (vendidos.has(i)) return;
-      if (seleccionados.has(i)) {
-        seleccionados.delete(i);
-        btn.classList.remove('selected');
-      } else {
-        seleccionados.add(i);
-        btn.classList.add('selected');
-      }
-      actualizarInputManual();
+      if (seleccionados.has(i)) seleccionados.delete(i);
+      else seleccionados.add(i);
+      actualizarInputDesdeSeleccion();
     };
     panel.appendChild(btn);
   }
 
-  function actualizarInputManual() {
+  function actualizarInputDesdeSeleccion() {
     seleccionadosInput.value = Array.from(seleccionados).sort((a,b)=>a-b).join(', ');
+    actualizarVisualTablero();
     actualizarTotales();
   }
 
-  // LÓGICA DE FILTRADO ESTRICTO
+  // --- LÓGICA DE VALIDACIÓN MULTI-SEPARADOR Y FILTRADO ---
   seleccionadosInput.oninput = function() {
-    // 1. Quitar letras al instante
-    this.value = this.value.replace(/[^0-9,\-\/ ]/g, ''); 
+    // 1. Guardar la posición del cursor para que no "salte" al escribir
+    const start = this.selectionStart;
     
+    // 2. Extraer todos los números ignorando el separador usado
     const nums = this.value.match(/\d+/g) || [];
-    seleccionados.clear();
-    
-    // Limpiar visual de botones
-    document.querySelectorAll('.carton-btn').forEach(b => { 
-        if(!b.classList.contains('vendido')) b.classList.remove('selected'); 
-    });
-
-    let huboVendidos = false;
+    const nuevoSeleccionados = new Set();
+    let huboVendidoEnEscritura = false;
 
     nums.forEach(str => {
       const n = parseInt(str);
-      // 2. Solo permitir números del 1 al 630 y que NO estén vendidos
       if (n >= 1 && n <= TOTAL_CARTONES) {
         if (!vendidos.has(n)) {
-          seleccionados.add(n);
-          const btn = document.querySelector(`[data-numero="${n}"]`);
-          if (btn) btn.classList.add('selected');
+          nuevoSeleccionados.add(n);
         } else {
-          huboVendidos = true;
+          huboVendidoEnEscritura = true;
         }
       }
     });
 
-    // 3. Auto-borrar del campo si hubo números vendidos o inválidos
-    if (huboVendidos) {
+    seleccionados = nuevoSeleccionados;
+
+    // 3. Si detectamos un número vendido, limpiamos el input para mostrar solo los válidos
+    if (huboVendidoEnEscritura) {
       this.value = Array.from(seleccionados).sort((a,b)=>a-b).join(', ');
     }
-    
+
+    actualizarVisualTablero();
     actualizarTotales();
   };
 
@@ -223,31 +169,32 @@
   }
   pendientesInput.oninput = actualizarTotales;
 
+  // Función Copiar
   document.getElementById('copyImageBtn').onclick = async () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const cols = 20;
-    const rows = Math.ceil(TOTAL_CARTONES / cols);
-    const cellSize = 70; const pad = 10;
+    const cols = 20; const rows = Math.ceil(TOTAL_CARTONES / cols);
+    const cellSize = 75; const pad = 5;
     canvas.width = cols * (cellSize + pad) + pad;
     canvas.height = 100 + rows * (cellSize + pad) + pad;
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#000'; ctx.font = 'bold 35px Nunito'; ctx.textAlign = 'center';
     ctx.fillText('CARTONES DISPONIBLES', canvas.width/2, 60);
-
     for (let i = 1; i <= TOTAL_CARTONES; i++) {
       if (vendidos.has(i)) continue;
       const col = (i - 1) % cols; const row = Math.floor((i - 1) / cols);
       const x = col * (cellSize + pad) + pad; const y = 100 + row * (cellSize + pad) + pad;
-      ctx.strokeStyle = '#ddd'; ctx.strokeRect(x, y, cellSize, cellSize);
-      ctx.fillStyle = '#000'; ctx.font = '900 24px Nunito'; ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle'; ctx.fillText(i.toString(), x + cellSize/2, y + cellSize/2);
+      ctx.strokeStyle = '#eee'; ctx.strokeRect(x, y, cellSize, cellSize);
+      ctx.fillStyle = '#000'; ctx.font = '900 28px Nunito'; ctx.textBaseline = 'middle';
+      ctx.fillText(i.toString(), x + cellSize/2, y + cellSize/2);
     }
+    const textoMensaje = "CARTONES DISPONIBLES: HAZ ZOOM PARA MIRARLOS 🔎✨";
     canvas.toBlob(async blob => {
       try {
-        await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-        alert("✅ Tabla copiada con éxito.");
-      } catch (e) { alert("❌ Error: Necesitas HTTPS para copiar."); }
+        const data = [new ClipboardItem({'image/png': blob, 'text/plain': new Blob([textoMensaje], {type:'text/plain'})})];
+        await navigator.clipboard.write(data);
+        alert("✅ Imagen y Texto copiados.");
+      } catch (e) { alert("Error: Usa HTTPS."); }
     });
   };
 
@@ -262,20 +209,16 @@
       batch.set(db.collection('registrosPagos').doc(), {
         nombre, monto: montoInput.value, referencia: document.getElementById('referencia').value,
         cartones: Array.from(seleccionados), pendientes: parseInt(pendientesInput.value) || 0,
-        timestamp: new Date()
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
       await batch.commit();
-      alert("¡Registro guardado!");
       location.reload();
-    } catch (err) {
-      alert("Error al guardar. Revisa tus reglas en Firebase.");
-      btn.disabled = false;
-    }
+    } catch (err) { alert("Error"); btn.disabled = false; }
   };
 
   cargarVendidos();
 </script>
 </body>
-
 </html>
+
 
