@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bingo Mágico - DOMINGO</title>
+  <title>Bingo Mágico - Venta de Cartones DOMINGO</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap" rel="stylesheet">
+
+  <!-- html2canvas para copiar imagen -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -54,22 +57,38 @@
 
 <div class="header">
   <div class="logo-mago">🧙‍♂️</div> 
-  <h1>✨ ¡¡¡BINGO MAGIC DOMINGO!!! (630)</h1>
+  <h1>✨ BINGO MAGIC DOMINGO (630)</h1>
   <button class="registro-nav-btn" onclick="window.location.href='registro.html'">Ver Registros</button>
 </div>
 
 <form id="compraForm">
+
   <label>Nombre del Jugador:</label>
   <input type="text" id="nombre" required placeholder="Nombre del cliente" />
 
   <label>Cartones (Escribe 22-23, 22/23, 22 23 o pega lista):</label>
   <input type="text" id="cartonesSeleccionados" placeholder="Cualquier separador funciona" autocomplete="off" />
 
+  <div id="alertaNoDisponibles" style="margin-top:10px; font-size:1.1em;"></div>
+
+  <button id="copiarNoDisponiblesBtn" type="button"
+    style="margin-top:10px; width:100%; padding:12px; border:none; border-radius:10px;
+    background:#e53935; color:white; font-weight:900; cursor:pointer; display:none;">
+    Copiar No Disponibles
+  </button>
+
+  <!-- 🔥 BOTÓN AZAR SEGURO -->
+  <button id="azarBtn" type="button"
+    style="margin-top:10px; width:100%; padding:12px; border:none; border-radius:10px;
+    background:#2196F3; color:white; font-weight:900; cursor:pointer;">
+    +1 AZAR
+  </button>
+
   <label>Cartones Pendientes:</label>
   <input type="number" id="pendientes" value="0" min="0" />
 
   <label>Referencia de Pago:</label>
-  <input type="text" id="referencia" required />
+  <input type="text" id="referencia" required maxlength="6" placeholder="6 dígitos o P" />
 
   <label>Monto Total (Bs):</label>
   <input type="text" id="monto" readonly value="0" />
@@ -77,7 +96,7 @@
   <button type="submit" id="comprarBtn">REGISTRAR COMPRA</button>
 </form>
 
-<button id="copyImageBtn">📸 COPIAR TABLA + TEXTO PARA WHATSAPP</button>
+<button id="copyImageBtn">📸 COPIAR TABLERO</button>
 
 <div class="tabla-scroll">
   <div id="panel-cartones"></div>
@@ -85,14 +104,77 @@
 
 <script>
   const TOTAL_CARTONES = 630;
-  const PRECIO_CARTON = 350;
+  const PRECIO_CARTON = 400;
   const panel = document.getElementById('panel-cartones');
   const seleccionadosInput = document.getElementById('cartonesSeleccionados');
   const montoInput = document.getElementById('monto');
   const pendientesInput = document.getElementById('pendientes');
+  const refInput = document.getElementById("referencia");
 
   let seleccionados = new Set();
   let vendidos = new Set();
+
+  // 🔥 BLOQUEAR ENTER EN INPUTS (pero lo activamos en el form)
+  document.querySelectorAll("input").forEach(input => {
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") e.preventDefault();
+    });
+  });
+
+  // 🔥 VALIDAR REFERENCIA (6 números o P)
+  refInput.addEventListener("input", () => {
+    let v = refInput.value.toUpperCase();
+
+    if (v === "P") {
+      refInput.value = "P";
+      return;
+    }
+
+    refInput.value = v.replace(/\D/g, "").slice(0, 6);
+  });
+
+  // 🔥 PERMITIR ENTER PARA REGISTRAR COMPRA
+  document.getElementById("compraForm").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("comprarBtn").click();
+    }
+  });
+
+  // 🔥 COPIAR SOLO IMAGEN (SIN RECORTES)
+  document.getElementById("copyImageBtn").onclick = async () => {
+    const panel = document.getElementById("panel-cartones");
+
+    const clone = panel.cloneNode(true);
+    clone.style.position = "absolute";
+    clone.style.left = "-9999px";
+    clone.style.top = "0";
+    clone.style.width = panel.scrollWidth + "px";
+    clone.style.height = panel.scrollHeight + "px";
+
+    document.body.appendChild(clone);
+
+    html2canvas(clone, { scale: 2 }).then(async canvas => {
+      clone.remove();
+
+      canvas.toBlob(async blob => {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob })
+          ]);
+          alert("Imagen copiada al portapapeles");
+        } catch (err) {
+          alert("Tu navegador no permite copiar imágenes directamente.");
+        }
+      });
+    });
+  };
+
+  // 🔥 BLOQUEAR SUBMIT ACCIDENTAL DESDE AZAR
+  document.getElementById("azarBtn").addEventListener("click", e => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
 
   async function cargarVendidos() {
     db.collection('registrosCartones').onSnapshot(snap => {
@@ -116,6 +198,7 @@
     btn.className = 'carton-btn';
     btn.textContent = i;
     btn.dataset.numero = i;
+    btn.type = "button";
     btn.onclick = () => {
       if (vendidos.has(i)) return;
       if (seleccionados.has(i)) seleccionados.delete(i);
@@ -131,36 +214,67 @@
     actualizarTotales();
   }
 
-  // --- LÓGICA DE VALIDACIÓN MULTI-SEPARADOR Y FILTRADO ---
+  // --- NO DISPONIBLES ---
+  const alertaNoDisponibles = document.getElementById('alertaNoDisponibles');
+  const copiarNoDisponiblesBtn = document.getElementById('copiarNoDisponiblesBtn');
+
   seleccionadosInput.oninput = function() {
-    // 1. Guardar la posición del cursor para que no "salte" al escribir
-    const start = this.selectionStart;
-    
-    // 2. Extraer todos los números ignorando el separador usado
     const nums = this.value.match(/\d+/g) || [];
     const nuevoSeleccionados = new Set();
-    let huboVendidoEnEscritura = false;
+    const noDisponibles = [];
 
     nums.forEach(str => {
       const n = parseInt(str);
       if (n >= 1 && n <= TOTAL_CARTONES) {
-        if (!vendidos.has(n)) {
-          nuevoSeleccionados.add(n);
-        } else {
-          huboVendidoEnEscritura = true;
-        }
+        if (!vendidos.has(n)) nuevoSeleccionados.add(n);
+        else noDisponibles.push(n);
       }
     });
 
     seleccionados = nuevoSeleccionados;
-
-    // 3. Si detectamos un número vendido, limpiamos el input para mostrar solo los válidos
-    if (huboVendidoEnEscritura) {
-      this.value = Array.from(seleccionados).sort((a,b)=>a-b).join(', ');
-    }
+    this.value = Array.from(seleccionados).sort((a,b)=>a-b).join(', ');
 
     actualizarVisualTablero();
     actualizarTotales();
+
+    if (noDisponibles.length > 0) {
+      alertaNoDisponibles.innerHTML = `
+        <div style="color:#ff5252;">
+          No disponibles: <b>${noDisponibles.join(", ")}</b>
+        </div>
+      `;
+      copiarNoDisponiblesBtn.style.display = "block";
+
+      copiarNoDisponiblesBtn.onclick = () => {
+        navigator.clipboard.writeText("No disponibles: " + noDisponibles.join(", "));
+        alert("Copiado al portapapeles");
+      };
+
+    } else {
+      alertaNoDisponibles.innerHTML = "";
+      copiarNoDisponiblesBtn.style.display = "none";
+    }
+  };
+
+  // --- 🔥 BOTÓN AZAR ---
+  document.getElementById("azarBtn").onclick = () => {
+
+    const disponibles = [];
+    for (let i = 1; i <= TOTAL_CARTONES; i++) {
+      if (!vendidos.has(i) && !seleccionados.has(i)) {
+        disponibles.push(i);
+      }
+    }
+
+    if (disponibles.length === 0) {
+      alert("No quedan cartones disponibles.");
+      return;
+    }
+
+    const random = disponibles[Math.floor(Math.random() * disponibles.length)];
+
+    seleccionados.add(random);
+    actualizarInputDesdeSeleccion();
   };
 
   function actualizarTotales() {
@@ -169,56 +283,46 @@
   }
   pendientesInput.oninput = actualizarTotales;
 
-  // Función Copiar
-  document.getElementById('copyImageBtn').onclick = async () => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const cols = 20; const rows = Math.ceil(TOTAL_CARTONES / cols);
-    const cellSize = 75; const pad = 5;
-    canvas.width = cols * (cellSize + pad) + pad;
-    canvas.height = 100 + rows * (cellSize + pad) + pad;
-    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#000'; ctx.font = 'bold 35px Nunito'; ctx.textAlign = 'center';
-    ctx.fillText('CARTONES DISPONIBLES', canvas.width/2, 60);
-    for (let i = 1; i <= TOTAL_CARTONES; i++) {
-      if (vendidos.has(i)) continue;
-      const col = (i - 1) % cols; const row = Math.floor((i - 1) / cols);
-      const x = col * (cellSize + pad) + pad; const y = 100 + row * (cellSize + pad) + pad;
-      ctx.strokeStyle = '#eee'; ctx.strokeRect(x, y, cellSize, cellSize);
-      ctx.fillStyle = '#000'; ctx.font = '900 28px Nunito'; ctx.textBaseline = 'middle';
-      ctx.fillText(i.toString(), x + cellSize/2, y + cellSize/2);
-    }
-    const textoMensaje = "CARTONES DISPONIBLES: HAZ ZOOM PARA MIRARLOS 🔎✨";
-    canvas.toBlob(async blob => {
-      try {
-        const data = [new ClipboardItem({'image/png': blob, 'text/plain': new Blob([textoMensaje], {type:'text/plain'})})];
-        await navigator.clipboard.write(data);
-        alert("✅ Imagen y Texto copiados.");
-      } catch (e) { alert("Error: Usa HTTPS."); }
-    });
-  };
-
+  // --- 🔥 REGISTRAR COMPRA ---
   document.getElementById('compraForm').onsubmit = async e => {
     e.preventDefault();
+
     const btn = document.getElementById('comprarBtn');
     btn.disabled = true;
+
+    const ref = refInput.value;
+
+    if (!(ref === "P" || (ref.length === 6 && /^\d+$/.test(ref)))) {
+      alert("La referencia debe ser 6 números o la letra P.");
+      btn.disabled = false;
+      return;
+    }
+
     try {
       const batch = db.batch();
       const nombre = document.getElementById('nombre').value;
+
       seleccionados.forEach(n => batch.set(db.collection('registrosCartones').doc(n.toString()), { nombre }));
+
       batch.set(db.collection('registrosPagos').doc(), {
-        nombre, monto: montoInput.value, referencia: document.getElementById('referencia').value,
-        cartones: Array.from(seleccionados), pendientes: parseInt(pendientesInput.value) || 0,
+        nombre,
+        monto: montoInput.value,
+        referencia: ref,
+        cartones: Array.from(seleccionados),
+        pendientes: parseInt(pendientesInput.value) || 0,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
+
       await batch.commit();
       location.reload();
-    } catch (err) { alert("Error"); btn.disabled = false; }
+
+    } catch (err) {
+      alert("Error");
+      btn.disabled = false;
+    }
   };
 
   cargarVendidos();
 </script>
 </body>
 </html>
-
-
